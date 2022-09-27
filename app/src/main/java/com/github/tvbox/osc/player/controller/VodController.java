@@ -10,6 +10,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.DiffUtil;
@@ -341,6 +342,38 @@ public class VodController extends BaseController {
             public void onClick(View view) {
 //                myHandle.removeCallbacks(myRunnable);
 //                myHandle.postDelayed(myRunnable, myHandleSeconds);
+                try {
+                    int playerType = mPlayerConfig.getInt("pl");
+                    ArrayList<Integer> exsitPlayerTypes = PlayerHelper.getExistPlayerTypes();
+                    int playerTypeIdx = 0;
+                    int playerTypeSize = exsitPlayerTypes.size();
+                    for(int i = 0; i<playerTypeSize; i++) {
+                        if (playerType == exsitPlayerTypes.get(i)) {
+                            if (i == playerTypeSize - 1) {
+                                playerTypeIdx = 0;
+                            } else {
+                                playerTypeIdx = i + 1;
+                            }
+                        }
+                    }
+                    playerType = exsitPlayerTypes.get(playerTypeIdx);
+                    mPlayerConfig.put("pl", playerType);
+                    updatePlayerCfgView();
+                    listener.updatePlayerCfg();
+                    listener.replay(false);
+//                    hideBottom();
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                mPlayerBtn.requestFocus();
+            }
+        });
+
+        mPlayerBtn.setOnLongClickListener(new OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View view) {
+//                myHandle.removeCallbacks(myRunnable);
+//                myHandle.postDelayed(myRunnable, myHandleSeconds);
                 FastClickCheckUtil.check(view);
                 try {
                     int playerType = mPlayerConfig.getInt("pl");
@@ -394,6 +427,7 @@ public class VodController extends BaseController {
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
+                return true;
             }
         });
         mPlayerIJKBtn.setOnClickListener(new OnClickListener() {
@@ -495,7 +529,6 @@ public class VodController extends BaseController {
                 }
             }
         });
-        // takagen99: Add long press to reset counter
         mPlayerTimeSkipBtn.setOnLongClickListener(new OnLongClickListener() {
             @Override
             public boolean onLongClick(View view) {
@@ -529,6 +562,18 @@ public class VodController extends BaseController {
                 FastClickCheckUtil.check(view);
                 listener.selectSubtitle();
                 hideBottom();
+            }
+        });
+        mZimuBtn.setOnLongClickListener(new OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View view) {
+                mSubtitleView.setVisibility(View.GONE);
+                mSubtitleView.destroy();
+                mSubtitleView.clearSubtitleCache();
+                mSubtitleView.isInternal = false;
+                hideBottom();
+                Toast.makeText(getContext(), "字幕已关闭", Toast.LENGTH_SHORT).show();
+                return true;
             }
         });
         mAudioTrackBtn.setOnClickListener(new OnClickListener() {
@@ -590,6 +635,8 @@ public class VodController extends BaseController {
         void playNext(boolean rmProgress);
 
         void playPre();
+
+        void prepared();
 
         void changeParse(ParseBean pb);
 
@@ -712,6 +759,9 @@ public class VodController extends BaseController {
                 listener.errReplay();
                 break;
             case VideoView.STATE_PREPARED:
+                mPlayLoadNetSpeed.setVisibility(GONE);
+                listener.prepared();
+                break;
             case VideoView.STATE_BUFFERED:
                 mPlayLoadNetSpeed.setVisibility(GONE);
                 break;
